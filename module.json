@@ -1,0 +1,7 @@
+{
+	"name": "quikrs/quikrjs",
+	"quikrs/quikrjs": {
+		"js": ["quikr.js"],
+		"on" : ["webmodules/jquery"]
+	}
+}
