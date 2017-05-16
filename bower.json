@@ -1,0 +1,21 @@
+{
+  "name": "quikrs-quikrjs",
+  "homepage": "https://github.com/quikrs/quikr.js",
+  "authors": [
+    "Lalit Tanwar <lalit.tanwar07@gmail.com>"
+  ],
+  "description": "",
+  "main": "quikr.js",
+  "license": "MIT",
+  "dependencies": {
+    "webmodules-jquery": ">=2.1.5"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "src/external/components/",
+    "test",
+    "tests"
+  ]
+}
