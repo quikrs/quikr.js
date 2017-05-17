@@ -4,13 +4,12 @@
     var resp_cache = {};
     var quikr = {
         cache_time: 2000,
-        tmpl: function tmpl(str, data) {
+        tmpl: function tmpl(str, data, option_id) {
             // Figure out if we're getting a template, or if we need to
             // load the template - and be sure to cache the result.
             var fn = !/\W/.test(str) ?
                 tmpl_cache[str] = tmpl_cache[str] ||
                     this.tmpl(document.getElementById(str).innerHTML) :
-
                 // Generate a reusable function that will serve as a template
                 // generator (and which will be cached).
                 new Function("obj",
@@ -30,29 +29,45 @@
                         .split("\r").join("\\'")
                     + "');}return p.join('');");
 
+                if(option_id){
+                    tmpl_cache[option_id] = fn;
+                }
             // Provide some basic currying to the user
             return data ? fn(data) : fn;
         },
         get: function (url, data) {
-            var cache_url = url + ((url.indexOf("?") > -1) ? "&" : "?") + $.param(data);
-            if (resp_cache[cache_url] && resp_cache[cache_url].timestamp > new Date().getTime()) {
-                return resp_cache[cache_url].$req
+            if(typeof this._urls_[url] == "function"){
+                var resp = this._urls_[url](data);
+                if(typeof resp.done == "function"){
+                    return resp;
+                } else {
+                    return $.Deferred(function($d){
+                        $d.resolve(resp);
+                    }).promise();
+                }
+            } else {
+                var cache_url = url + ((url.indexOf("?") > -1) ? "&" : "?") + $.param(data);
+                if (resp_cache[cache_url] && resp_cache[cache_url].timestamp > new Date().getTime()) {
+                    return resp_cache[cache_url].$req
+                }
+                resp_cache[cache_url] = {
+                    timestamp: new Date().getTime() + this.cache_time,
+                    $req: $.get(url, data)
+                };
+                return resp_cache[cache_url].$req;
             }
-            resp_cache[cache_url] = {
-                timestamp: new Date().getTime() + this.cache_time,
-                $req: $.get(url, data)
-            };
-            return resp_cache[cache_url].$req;
         },
         _actions_: {},
         action: function (action, callback) {
             this._actions_[action] = callback;
             return this;
-        }
-    };
-
-    $(document).ready(function () {
-        $('[qkr="tmpl"]').each(function (i, elem) {
+        },
+        _urls_: {},
+        url: function (url, callback) {
+            this._urls_[url] = callback;
+            return this;
+        },
+        applyTmpl : function(elem, rawdata){
             elem.style.visibility = "hidden";
             var url = elem.getAttribute("url");
             var apis = [];
@@ -68,22 +83,48 @@
                 }
             }
             var data = {};
-            $.when.apply($, apis.map(function (api) {
-                return quikr.get(api.url, elem.dataset).then(function (resp) {
-                    data[api.key] = resp;
-                    return data;
-                });
-            })).done(function (resp) {
+            var render = function(resp){
                 elem.style.visibility = "visible";
-                elem.innerHTML = quikr.tmpl($("<textarea/>").html(elem.innerHTML).val(), resp);
+                if(!elem.getAttribute("qkr")){
+                    elem.innerHTML = quikr.tmpl(elem.id, resp);
+                } else {
+                    var children = elem.children;
+                    var innerHTML = "";
+                    if(children.length ==1 && children[0].nodeName  == "SCRIPT"){
+                        innerHTML = children[0].innerHTML;
+                    } else {
+                        innerHTML = elem.innerHTML;
+                    }
+                    elem.innerHTML = quikr.tmpl($("<textarea/>").html(innerHTML).val(), resp,elem.id);
+                }
                 elem.setAttribute('qkr', "");
-            });
+            };
+
+            if(apis.length>0){
+                $.when.apply($, apis.map(function (api) {
+                    return quikr.get(api.url, elem.dataset).then(function (resp) {
+                        data[api.key] = resp;
+                        return data;
+                    });
+                })).done(function (resp) {
+                    render(resp);
+                });
+            } else if(rawdata){
+                render(rawdata);
+            }
+
+        }
+    };
+
+    $(document).ready(function () {
+        $('[qkr="tmpl"]').each(function (i, elem) {
+            quikr.applyTmpl(elem);
         });
         $("body").on("click", '[qkr="action"]', function (e) {
             var elem = e.target;
             var getUrl = elem.getAttribute("get-url");
             var postUrl = elem.getAttribute("post-url");
-            var action = elem.getAttribute("action");
+            var action = elem.getAttribute("qkr-action");
             var callback = function (resp) {
                 if(typeof quikr._actions_[action] === "function"){
                     quikr._actions_[action].call(elem, resp);
@@ -106,6 +147,10 @@
             }
 
         });
+    });
+    quikr.action("qkr-reload",function(data){
+        var tmpl = this.getAttribute("qkr-tmpl");
+        quikr.applyTmpl(document.getElementById(tmpl));
     });
     root.quikr = quikr;
 })(this);
