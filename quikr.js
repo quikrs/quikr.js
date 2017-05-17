@@ -3,7 +3,7 @@
     var tmpl_cache = {};
     var resp_cache = {};
     var quikr = {
-        cache_time: 2000,
+        cache_time: 5000,
         tmpl: function tmpl(str, data, option_id) {
             // Figure out if we're getting a template, or if we need to
             // load the template - and be sure to cache the result.
@@ -68,7 +68,6 @@
             return this;
         },
         applyTmpl : function(elem, rawdata){
-            elem.style.visibility = "hidden";
             var url = elem.getAttribute("url");
             var apis = [];
             for (var i = 0; i < elem.attributes.length; i++) {
@@ -84,7 +83,6 @@
             }
             var data = {};
             var render = function(resp){
-                elem.style.visibility = "visible";
                 if(!elem.getAttribute("qkr")){
                     elem.innerHTML = quikr.tmpl(elem.id, resp);
                 } else {
