@@ -29,19 +29,19 @@
                         .split("\r").join("\\'")
                     + "');}return p.join('');");
 
-                if(option_id){
-                    tmpl_cache[option_id] = fn;
-                }
+            if (option_id) {
+                tmpl_cache[option_id] = fn;
+            }
             // Provide some basic currying to the user
             return data ? fn(data) : fn;
         },
         get: function (url, data) {
-            if(typeof this._urls_[url] == "function"){
+            if (typeof this._urls_[url] == "function") {
                 var resp = this._urls_[url](data);
-                if(typeof resp.done == "function"){
+                if (typeof resp.done == "function") {
                     return resp;
                 } else {
-                    return $.Deferred(function($d){
+                    return $.Deferred(function ($d) {
                         $d.resolve(resp);
                     }).promise();
                 }
@@ -67,7 +67,7 @@
             this._urls_[url] = callback;
             return this;
         },
-        applyTmpl : function(elem, rawdata){
+        applyTmpl: function (elem, rawdata) {
             var url = elem.getAttribute("url");
             var apis = [];
             for (var i = 0; i < elem.attributes.length; i++) {
@@ -82,23 +82,33 @@
                 }
             }
             var data = {};
-            var render = function(resp){
-                if(!elem.getAttribute("qkr")){
+            var render = function (resp) {
+                if (!elem.getAttribute("qkr")) {
                     elem.innerHTML = quikr.tmpl(elem.id, resp);
                 } else {
                     var children = elem.children;
                     var innerHTML = "";
-                    if(children.length ==1 && children[0].nodeName  == "SCRIPT"){
+                    if (children.length == 1 && children[0].nodeName == "SCRIPT") {
                         innerHTML = children[0].innerHTML;
                     } else {
                         innerHTML = elem.innerHTML;
                     }
-                    elem.innerHTML = quikr.tmpl($("<textarea/>").html(innerHTML).val(), resp,elem.id);
+                    var newTag = elem.getAttribute('tag');
+                    var innerHTMLOut = quikr.tmpl($("<textarea/>").html(innerHTML).val(), resp, elem.id);
+                    if (elem.nodeName === "SCRIPT" && newTag) {
+                        elem.innerHTML = "";
+                        var $elem = $(elem.outerHTML.replace(/^<script/, "<" + newTag).replace(/<\/script>$/, "</" + newTag + ">"));
+                        $(elem).replaceWith($elem);
+
+                        elem = $elem[0];
+                        //console.error(innerHTMLOut)
+                    }
+                    elem.innerHTML = innerHTMLOut;
                 }
                 elem.setAttribute('qkr', "");
             };
 
-            if(apis.length>0){
+            if (apis.length > 0) {
                 $.when.apply($, apis.map(function (api) {
                     return quikr.get(api.url, elem.dataset).then(function (resp) {
                         data[api.key] = resp;
@@ -107,7 +117,7 @@
                 })).done(function (resp) {
                     render(resp);
                 });
-            } else if(rawdata){
+            } else if (rawdata) {
                 render(rawdata);
             }
 
@@ -124,16 +134,16 @@
             var postUrl = elem.getAttribute("post-url");
             var action = elem.getAttribute("qkr-action");
             var callback = function (resp) {
-                if(typeof quikr._actions_[action] === "function"){
+                if (typeof quikr._actions_[action] === "function") {
                     quikr._actions_[action].call(elem, resp);
                 }
             };
             var data = {};
-            for(var key in elem.dataset){
-                if(elem.dataset[key].indexOf("?") == 0){
-                    data[key] = root.prompt(elem.dataset[key].substr(1) || key,"");
+            for (var key in elem.dataset) {
+                if (elem.dataset[key].indexOf("?") == 0) {
+                    data[key] = root.prompt(elem.dataset[key].substr(1) || key, "");
                 } else {
-                    data[key]=elem.dataset[key];
+                    data[key] = elem.dataset[key];
                 }
             }
             if (getUrl) {
@@ -146,7 +156,7 @@
 
         });
     });
-    quikr.action("qkr-reload",function(data){
+    quikr.action("qkr-reload", function (data) {
         var tmpl = this.getAttribute("qkr-tmpl");
         quikr.applyTmpl(document.getElementById(tmpl));
     });
