@@ -106,6 +106,7 @@
                     elem.innerHTML = innerHTMLOut;
                 }
                 elem.setAttribute('qkr', "");
+                $(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
             };
 
             if (apis.length > 0) {
