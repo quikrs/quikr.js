@@ -1,4 +1,4 @@
-(function (root) {
+!(function (root) {
 
     var tmpl_cache = {};
     var resp_cache = {};
@@ -107,6 +107,7 @@
                 }
                 elem.setAttribute('qkr', "");
                 $(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
+                
             };
 
             if (apis.length > 0) {
@@ -125,8 +126,8 @@
         }
     };
 
-    $(document).ready(function () {
-        $('[qkr="tmpl"]').each(function (i, elem) {
+    quikr.init = function(){
+       $('[qkr="tmpl"]').each(function (i, elem) {
             quikr.applyTmpl(elem);
         });
         $("body").on("click", '[qkr="action"]', function (e) {
@@ -154,12 +155,49 @@
             } else {
                 callback(data);
             }
-
         });
-    });
+    };
+
     quikr.action("qkr-reload", function (data) {
         var tmpl = this.getAttribute("qkr-tmpl");
         quikr.applyTmpl(document.getElementById(tmpl));
     });
+
+  function loadImage (el, fn) {
+    var img = new Image()
+      , src = el.getAttribute('data-src');
+    img.onload = function() {
+      if (!! el.parent)
+        el.parent.replaceChild(img, el)
+      else
+        el.src = src;
+
+      fn? fn() : null;
+    }
+    img.src = src;
+  }
+
+  function elementInViewport(el) {
+    var rect = el.getBoundingClientRect()
+
+    return (
+       rect.top    >= 0
+    && rect.left   >= 0
+    && rect.top <= (window.innerHeight || document.documentElement.clientHeight)
+    )
+  }
+
+    var loadLazyImages = function(){
+        images = $('img[data-src]')
+        for (var i = 0; i < images.length; i++) {
+            if (elementInViewport(images[i])) {
+              loadImage(images[i], function () {
+                //images.splice(i, i);
+              });
+            }
+        };
+    };
+    quikr.loadLazyImages = loadLazyImages;
+
     root.quikr = quikr;
 })(this);
