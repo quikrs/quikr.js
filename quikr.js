@@ -121,8 +121,9 @@
                 });
             } else if (rawdata) {
                 render(rawdata);
+            } else {
+                render(elem.dataset);
             }
-
         }
     };
 
