@@ -189,10 +189,10 @@
     )
   }
 
-    var loadLazyImages = function(){
+    var loadLazyImages = function(force){
         images = $('img[data-src]')
         for (var i = 0; i < images.length; i++) {
-            if (elementInViewport(images[i])) {
+            if (force || elementInViewport(images[i])) {
               loadImage(images[i], function () {
                 //images.splice(i, i);
               });
