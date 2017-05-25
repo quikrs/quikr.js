@@ -167,6 +167,7 @@
   function loadImage (el, fn) {
     var img = new Image()
       , src = el.getAttribute('data-src');
+      el.removeAttribute('data-src');
     img.onload = function() {
       if (!! el.parent)
         el.parent.replaceChild(img, el)
