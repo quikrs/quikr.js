@@ -209,11 +209,12 @@
             el.src = options["404"];
         }
     };
-    if(typeof options == "function"){
+    var onerror = options.error || options;
+    if(typeof onerror == "function"){
         var old_onerror = img.onerror;
         img.onerror = function(){
             old_onerror.apply(this,arguments);
-            return options.apply(this,arguments);
+            return onerror.apply(this,arguments);
         }
     }
     if(src) {
