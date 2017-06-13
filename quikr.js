@@ -41,18 +41,18 @@
                 if (typeof resp.done == "function") {
                     return resp;
                 } else {
-                    return $.Deferred(function ($d) {
+                    return jQuery.Deferred(function ($d) {
                         $d.resolve(resp);
                     }).promise();
                 }
             } else {
-                var cache_url = url + ((url.indexOf("?") > -1) ? "&" : "?") + $.param(data);
+                var cache_url = url + ((url.indexOf("?") > -1) ? "&" : "?") + jQuery.param(data);
                 if (resp_cache[cache_url] && resp_cache[cache_url].timestamp > new Date().getTime()) {
                     return resp_cache[cache_url].$req
                 }
                 resp_cache[cache_url] = {
                     timestamp: new Date().getTime() + this.cache_time,
-                    $req: $.get(url, data)
+                    $req: jQuery.get(url, data)
                 };
                 return resp_cache[cache_url].$req;
             }
@@ -94,11 +94,11 @@
                         innerHTML = elem.innerHTML;
                     }
                     var newTag = elem.getAttribute('tag');
-                    var innerHTMLOut = quikr.tmpl($("<textarea/>").html(innerHTML).val(), resp, elem.id);
+                    var innerHTMLOut = quikr.tmpl(jQuery("<textarea/>").html(innerHTML).val(), resp, elem.id);
                     if (elem.nodeName === "SCRIPT" && newTag) {
                         elem.innerHTML = "";
-                        var $elem = $(elem.outerHTML.replace(/^<script/, "<" + newTag).replace(/<\/script>$/, "</" + newTag + ">"));
-                        $(elem).replaceWith($elem);
+                        var $elem = jQuery(elem.outerHTML.replace(/^<script/, "<" + newTag).replace(/<\/script>$/, "</" + newTag + ">"));
+                        jQuery(elem).replaceWith($elem);
 
                         elem = $elem[0];
                         //console.error(innerHTMLOut)
@@ -106,12 +106,12 @@
                     elem.innerHTML = innerHTMLOut;
                 }
                 elem.setAttribute('qkr', "");
-                $(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
+                jQuery(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
                 
             };
 
             if (apis.length > 0) {
-                $.when.apply($, apis.map(function (api) {
+                jQuery.when.apply($, apis.map(function (api) {
                     return quikr.get(api.url, elem.dataset).then(function (resp) {
                         data[api.key] = resp;
                         return data;
@@ -128,10 +128,10 @@
     };
 
     quikr.init = function(){
-       $('[qkr="tmpl"]').each(function (i, elem) {
+       jQuery('[qkr="tmpl"]').each(function (i, elem) {
             quikr.applyTmpl(elem);
         });
-        $("body").on("click", '[qkr="action"]', function (e) {
+        jQuery("body").on("click", '[qkr="action"]', function (e) {
             var elem = e.target;
             var getUrl = elem.getAttribute("get-url");
             var postUrl = elem.getAttribute("post-url");
@@ -150,9 +150,9 @@
                 }
             }
             if (getUrl) {
-                $.get(getUrl, data).done(callback);
+                jQuery.get(getUrl, data).done(callback);
             } else if (postUrl) {
-                $.post(getUrl, data).done(callback);
+                jQuery.post(getUrl, data).done(callback);
             } else {
                 callback(data);
             }
@@ -164,19 +164,67 @@
         quikr.applyTmpl(document.getElementById(tmpl));
     });
 
-  function loadImage (el, fn) {
-    var img = new Image()
-      , src = el.getAttribute('data-src');
-      el.removeAttribute('data-src');
-    img.onload = function() {
+  function loadImage (el, options) {
+    var status = el.getAttribute('quikr-status');
+    var prop = "data-src";
+    if(status == "loaded"){
+        return;
+    } else if(status == "error"){
+        var srcs = [];
+        for(var i=0 ;i<el.attributes.length;i++){
+            if(/data-src-?[0-9]*/.test(el.attributes[i].name)){
+                srcs.push(el.attributes[i].name)
+            }
+        }
+        srcs = srcs.sort();
+        if(!srcs.length){
+           // return;
+        }
+        prop = srcs.shift();
+    }
+    var img =  el.img || new Image()
+      , src = el.getAttribute(prop);
+      el.removeAttribute(prop);
+    if(!src){
+        //Contiune to Set Callbacks only
+       // return;
+    }
+    if(options.blank && !el.src){
+        el.src = el.src || src;
+    } 
+
+    img.onload = src ? function() {
       if (!! el.parent)
         el.parent.replaceChild(img, el)
-      else
+      else if(src && status!="loaded"){
         el.src = src;
+        el.setAttribute('quikr-status','loaded');
+      }
+    } : img.onload;
 
-      fn? fn() : null;
+    img.onerror =  img.onerror || function(){
+        el.setAttribute('quikr-status','error');
+        el.setAttribute('quikr-img-error',img.src);
+        if(options["404"]){
+            el.src = options["404"];
+        }
+    };
+    if(typeof options == "function"){
+        var old_onerror = img.onerror;
+        img.onerror = function(){
+            old_onerror.apply(this,arguments);
+            return options.apply(this,arguments);
+        }
     }
-    img.src = src;
+    if(src) {
+        img.src = src;
+        el.setAttribute('quikr-status','loading');
+        el.setAttribute('quikr-img-loading',img.src);
+    } else if(img && typeof img.onerror == 'function'){
+        //img.onerror(src);
+        //WARNING : Triggers Infinite Loop
+    }
+    el.img = img;
   }
 
   function elementInViewport(el) {
@@ -189,13 +237,25 @@
     )
   }
 
-    var loadLazyImages = function(force){
-        images = $('img[data-src]')
+    jQuery.fn.loadLazyImages = function(options, _force){
+        var force = _force || true;
+        this.each(function(i,elem){
+            if (force || elementInViewport(elem)) {
+                loadImage(elem, options || {});
+            }
+        })
+    };
+    var loadLazyImages = function(options, _force){
+        if(options === true || options === false){
+            var __force = options;
+            options = _force;
+            _force = __force;
+        }
+        var force = _force || false;
+        images = jQuery('img[data-src],img[quikr-status="error"]');
         for (var i = 0; i < images.length; i++) {
             if (force || elementInViewport(images[i])) {
-              loadImage(images[i], function () {
-                //images.splice(i, i);
-              });
+              loadImage(images[i], options || {});
             }
         };
     };
