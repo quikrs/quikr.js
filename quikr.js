@@ -202,11 +202,16 @@
       }
     } : img.onload;
 
+    if(!options["404"]){
+           //console.error("NO OPTIONS=",el, options);
+    }
     img.onerror =  img.onerror || function(){
         el.setAttribute('quikr-status','error');
         el.setAttribute('quikr-img-error',img.src);
         if(options["404"]){
             el.src = options["404"];
+        } else {
+            //console.error("NO OPTIONS==",el, options);
         }
     };
     var onerror = options.error || options;
