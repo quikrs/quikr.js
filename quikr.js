@@ -213,6 +213,7 @@
         } else {
             //console.error("NO OPTIONS==",el, options);
         }
+        loadImage(el,{404 : options["404"], blank : options.blank });
     };
     var onerror = options.error || options;
     if(typeof onerror == "function"){
