@@ -1,6 +1,7 @@
 !(function (root) {
 
     var tmpl_cache = {};
+    var compiled_temp = {};
     var resp_cache = {};
     var quikr = {
         cache_time: 5000,
@@ -83,7 +84,14 @@
             }
             var data = {};
             var render = function (resp) {
-                if (!elem.getAttribute("qkr")) {
+                var qkr_tmpl = elem.getAttribute("qkr-tmpl");
+
+                if(qkr_tmpl){
+                    if(compiled_temp[qkr_tmpl]){
+                        elem.innerHTML  = compiled_temp[qkr_tmpl](resp);
+                    }
+                    return;
+                } else if (!elem.getAttribute("qkr")) {
                     elem.innerHTML = quikr.tmpl(elem.id, resp);
                 } else {
                     var children = elem.children;
@@ -107,7 +115,7 @@
                 }
                 elem.setAttribute('qkr', "");
                 jQuery(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
-                
+
             };
 
             if (apis.length > 0) {
@@ -127,15 +135,22 @@
         }
     };
 
-    quikr.init = function(){
-       jQuery('[qkr="tmpl"]').each(function (i, elem) {
+
+
+    quikr.init = function () {
+        jQuery('script[type="text/qkr-tmpl"]').each(function (i, elem) {
+            compiled_temp[elem.id] = quikr.tmpl(elem.innerHTML, undefined ,elem.id);
+        });
+        jQuery('[qkr="tmpl"],[qkr-tmpl]').each(function (i, elem) {
             quikr.applyTmpl(elem);
         });
-        jQuery("body").on("click", '[qkr="action"]', function (e) {
+        jQuery("body").on("click", '[qkr-action]', function (e) {
             var elem = e.target;
-            var getUrl = elem.getAttribute("get-url");
-            var postUrl = elem.getAttribute("post-url");
             var action = elem.getAttribute("qkr-action");
+
+            var getUrl = elem.getAttribute("get-url") || ((action=="qkr-get") ? elem.getAttribute("qkr-url") : null);
+            var postUrl = elem.getAttribute("post-url") || ((action=="qkr-post") ? elem.getAttribute("qkr-url") : null);
+
             var callback = function (resp) {
                 if (typeof quikr._actions_[action] === "function") {
                     quikr._actions_[action].call(elem, resp);
@@ -152,7 +167,7 @@
             if (getUrl) {
                 jQuery.get(getUrl, data).done(callback);
             } else if (postUrl) {
-                jQuery.post(getUrl, data).done(callback);
+                jQuery.post(postUrl, data).done(callback);
             } else {
                 callback(data);
             }
@@ -164,96 +179,96 @@
         quikr.applyTmpl(document.getElementById(tmpl));
     });
 
-  function loadImage (el, options) {
-    var status = el.getAttribute('quikr-status');
-    var prop = "data-src";
-    if(status == "loaded"){
-        return;
-    } else if(status == "error"){
-        var srcs = [];
-        for(var i=0 ;i<el.attributes.length;i++){
-            if(/data-src-?[0-9]*/.test(el.attributes[i].name)){
-                srcs.push(el.attributes[i].name)
+    function loadImage(el, options) {
+        var status = el.getAttribute('quikr-status');
+        var prop = "data-src";
+        if (status == "loaded") {
+            return;
+        } else if (status == "error") {
+            var srcs = [];
+            for (var i = 0; i < el.attributes.length; i++) {
+                if (/data-src-?[0-9]*/.test(el.attributes[i].name)) {
+                    srcs.push(el.attributes[i].name)
+                }
+            }
+            srcs = srcs.sort();
+            if (!srcs.length) {
+                // return;
+            }
+            prop = srcs.shift();
+        }
+        var img = el.img || new Image()
+            , src = el.getAttribute(prop);
+        el.removeAttribute(prop);
+        if (!src) {
+            //Contiune to Set Callbacks only
+            // return;
+        }
+        if (options.blank && !el.src) {
+            el.src = el.src || src;
+        }
+
+        img.onload = src ? function () {
+            if (!!el.parent)
+                el.parent.replaceChild(img, el)
+            else if (src && status != "loaded") {
+                el.src = src;
+                el.setAttribute('quikr-status', 'loaded');
+            }
+        } : img.onload;
+
+        if (!options["404"]) {
+            //console.error("NO OPTIONS=",el, options);
+        }
+        img.onerror = img.onerror || function () {
+                el.setAttribute('quikr-status', 'error');
+                el.setAttribute('quikr-img-error', img.src);
+                if (options["404"]) {
+                    el.src = options["404"];
+                } else {
+                    //console.error("NO OPTIONS==",el, options);
+                }
+                loadImage(el, {404: options["404"], blank: options.blank});
+            };
+        var onerror = options.error || options;
+        if (typeof onerror == "function") {
+            var old_onerror = img.onerror;
+            img.onerror = function () {
+                old_onerror.apply(this, arguments);
+                return onerror.apply(this, arguments);
             }
         }
-        srcs = srcs.sort();
-        if(!srcs.length){
-           // return;
+        if (src) {
+            img.src = src;
+            el.setAttribute('quikr-status', 'loading');
+            el.setAttribute('quikr-img-loading', img.src);
+        } else if (img && typeof img.onerror == 'function') {
+            //img.onerror(src);
+            //WARNING : Triggers Infinite Loop
         }
-        prop = srcs.shift();
+        el.img = img;
     }
-    var img =  el.img || new Image()
-      , src = el.getAttribute(prop);
-      el.removeAttribute(prop);
-    if(!src){
-        //Contiune to Set Callbacks only
-       // return;
+
+    function elementInViewport(el) {
+        var rect = el.getBoundingClientRect()
+
+        return (
+            rect.top >= 0
+            && rect.left >= 0
+            && rect.top <= (window.innerHeight || document.documentElement.clientHeight)
+        )
     }
-    if(options.blank && !el.src){
-        el.src = el.src || src;
-    } 
 
-    img.onload = src ? function() {
-      if (!! el.parent)
-        el.parent.replaceChild(img, el)
-      else if(src && status!="loaded"){
-        el.src = src;
-        el.setAttribute('quikr-status','loaded');
-      }
-    } : img.onload;
-
-    if(!options["404"]){
-           //console.error("NO OPTIONS=",el, options);
-    }
-    img.onerror =  img.onerror || function(){
-        el.setAttribute('quikr-status','error');
-        el.setAttribute('quikr-img-error',img.src);
-        if(options["404"]){
-            el.src = options["404"];
-        } else {
-            //console.error("NO OPTIONS==",el, options);
-        }
-        loadImage(el,{404 : options["404"], blank : options.blank });
-    };
-    var onerror = options.error || options;
-    if(typeof onerror == "function"){
-        var old_onerror = img.onerror;
-        img.onerror = function(){
-            old_onerror.apply(this,arguments);
-            return onerror.apply(this,arguments);
-        }
-    }
-    if(src) {
-        img.src = src;
-        el.setAttribute('quikr-status','loading');
-        el.setAttribute('quikr-img-loading',img.src);
-    } else if(img && typeof img.onerror == 'function'){
-        //img.onerror(src);
-        //WARNING : Triggers Infinite Loop
-    }
-    el.img = img;
-  }
-
-  function elementInViewport(el) {
-    var rect = el.getBoundingClientRect()
-
-    return (
-       rect.top    >= 0
-    && rect.left   >= 0
-    && rect.top <= (window.innerHeight || document.documentElement.clientHeight)
-    )
-  }
-
-    jQuery.fn.loadLazyImages = function(options, _force){
+    jQuery.fn.loadLazyImages = function (options, _force) {
         var force = _force || true;
-        this.each(function(i,elem){
+        this.each(function (i, elem) {
             if (force || elementInViewport(elem)) {
                 loadImage(elem, options || {});
             }
         })
     };
-    var loadLazyImages = function(options, _force){
-        if(options === true || options === false){
+    var loadLazyImages = function (options, _force) {
+        if (options === true || options === false) {
             var __force = options;
             options = _force;
             _force = __force;
@@ -262,9 +277,10 @@
         images = jQuery('img[data-src],img[quikr-status="error"]');
         for (var i = 0; i < images.length; i++) {
             if (force || elementInViewport(images[i])) {
-              loadImage(images[i], options || {});
+                loadImage(images[i], options || {});
             }
-        };
+        }
+        ;
     };
     quikr.loadLazyImages = loadLazyImages;
 

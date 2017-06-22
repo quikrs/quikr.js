@@ -4,7 +4,7 @@ A micro framework for small applications, almost all logic on server.
 ## Inline Template
 ```html
 
-<ul id="my_template_id" qkr="tmpl" url-items="/get/all/items">
+<ul id="my_template_id" url-items="/get/all/items">
   <% for(var i in items){ %>
     <li> 
       <%= item[i].title %>
@@ -44,11 +44,11 @@ Somtimee we dont want to get data from server , rather get fetch from local func
   </script>
   
   <!-- To use template -->
-  <ul id="my_section_1" qkr="tmpl" qkr-tmpl="my_template" url-items="/get/all/items">
+  <ul id="my_section_1" qkr-tmpl="my_template" url-items="/get/all/items">
   </ul>
   
   <!-- To use template  again -->
-  <ul id="my_section_2" qkr="tmpl" qkr-tmpl="my_template" url-items="/get/sold/items">
+  <ul id="my_section_2" qkr-tmpl="my_template" url-items="/get/sold/items">
   </ul>
   
 ```
@@ -61,7 +61,8 @@ Somtimee we dont want to get data from server , rather get fetch from local func
 ## Action Buttons
 
 ```html
-<button qkr="action" qkr-action="show_alert">Show Alert</button>
+<button qkr-action="show_alert">Show Alert</button>
+<button qkr-action="qkr-reload" qkr-tmpl="mycart2">Refresh</button>
 ```
 ### Attributes
 
