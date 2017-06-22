@@ -91,7 +91,7 @@
                         elem.innerHTML  = compiled_temp[qkr_tmpl](resp);
                     }
                     return;
-                } else if (!elem.getAttribute("qkr")) {
+                } else if (!elem.getAttribute("qkr") && elem.hasAttribute("qkr-tmpl-compiled")) {
                     elem.innerHTML = quikr.tmpl(elem.id, resp);
                 } else {
                     var children = elem.children;
@@ -112,6 +112,7 @@
                         //console.error(innerHTMLOut)
                     }
                     elem.innerHTML = innerHTMLOut;
+                    elem.setAttribute("qkr-tmpl-compiled","")
                 }
                 elem.setAttribute('qkr', "");
                 jQuery(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
