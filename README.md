@@ -81,6 +81,48 @@ It has following options avaialble
   })
 ```
 
+And in your javascript?
+
+```javascript
+
+window.onload = function() {
+  quikr.init();
+};
+
+```
+
+
+## Lazy Image Loading
+quikr makes it easy to load your images lazily without blocking rendering of your document. No need to download any plugin. Simply change your syntax.
+
+
+```html
+<img src="loading.gif" data-src="http://my_actual_image.jpg" />
+
+```
+If you want fallbacks for your images, in case it failed to load
+
+```html
+<img src="loading.gif" data-src="http://my_actual_image.jpg" 
+        data-src2="http://try_my_actual_image_from_server2.jpg"  
+        data-src3="http://please_one more_time_my_actual_image_from_Server3.jpg" />
+```
+
+And in your javascript?
+
+```javascript
+window.onload = function() {
+    quikr.loadLazyImages({
+        "blank" : "loading.gif",
+        "404" : "no_image_found.gif",
+        "error" :  function() {
+          //callback if image not found
+        }
+    });
+}
+```
+
+
 
 
 
