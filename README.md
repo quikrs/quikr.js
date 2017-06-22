@@ -4,7 +4,7 @@ A micro framework for small applications, almost all logic on server.
 ## Inline Template
 ```html
 
-<ul id="my_template_id" url-items="/get/all/items">
+<ul id="my_template_id" qkr-tmpl url-items="/get/all/items">
   <% for(var i in items){ %>
     <li> 
       <%= item[i].title %>
@@ -14,8 +14,8 @@ A micro framework for small applications, almost all logic on server.
 ```
 ### Attributes
 
-#### qkr
-To tell quikr to compile this template and render it right there 
+#### [qkr-tmpl]
+No Value specified - To tell quikr to compile this template and render it right there 
 
 #### [url-items=url]
 will fetch items from *url* and pass it to template for rendering.
@@ -52,6 +52,9 @@ Somtimee we dont want to get data from server , rather get fetch from local func
   </ul>
   
 ```
+#### [qkr-tmpl="my_template"]
+template_id - To tell quikr to render this div using *my_template*
+
 
 ## Re-Rendering Template
 ```javascript
