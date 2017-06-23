@@ -90,7 +90,7 @@
                     if(compiled_temp[qkr_tmpl]){
                         elem.innerHTML  = compiled_temp[qkr_tmpl](resp);
                     }
-                    return;
+                    //return;
                 } else if (!elem.getAttribute("qkr") && elem.hasAttribute("qkr-tmpl-compiled")) {
                     elem.innerHTML = quikr.tmpl(elem.id, resp);
                 } else {
