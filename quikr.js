@@ -176,7 +176,7 @@
     };
 
     quikr.action("qkr-reload", function (data) {
-        var tmpl = this.getAttribute("qkr-tmpl");
+        var tmpl = this.getAttribute("qkr-target");
         quikr.applyTmpl(document.getElementById(tmpl));
     });
 
