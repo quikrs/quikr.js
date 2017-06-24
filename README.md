@@ -72,7 +72,7 @@ template_id - To tell quikr to render this div using *my_template*
 #### qkr-action
 Action which is to be taken on click (by default onclick is event)
 It has following options avaialble
-- **qkr-reload** - Reloads template based on addition attributes **qkr-tmpl** 
+- **qkr-reload** - Reloads template based on addition attributes **qkr-target** 
 - **qkr-post** - makes post request with on **qkr-url**, with dataset as post params
 - **qkr-get**  - makes get request with on **qkr-url** with dataset as query params
 - **custom action** -  you can define your own actions with **quikr.action** api
