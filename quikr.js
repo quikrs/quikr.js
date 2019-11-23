@@ -70,6 +70,7 @@
         },
         applyTmpl: function (elem, rawdata) {
             var url = elem.getAttribute("url");
+            var on_render = elem.getAttribute("qkr-on-render");
             var apis = [];
             for (var i = 0; i < elem.attributes.length; i++) {
                 if (elem.attributes[i].name) {
@@ -83,6 +84,7 @@
                 }
             }
             var data = {};
+            var THAT = this;
             var render = function (resp) {
                 var qkr_tmpl = elem.getAttribute("qkr-tmpl");
 
@@ -116,6 +118,9 @@
                 }
                 elem.setAttribute('qkr', "");
                 jQuery(elem).removeAttr("qkr-attr").find("[qkr-attr]").removeAttr("qkr-attr");
+                if(on_render !== undefined && THAT._actions_[on_render]!== undefined) {
+                    THAT._actions_[on_render](elem, resp);
+                }
 
             };
 
