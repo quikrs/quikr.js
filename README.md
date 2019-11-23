@@ -7,7 +7,7 @@ A micro framework for small applications, almost all logic on server.
 <ul id="my_template_id" qkr-tmpl url-items="/get/all/items">
   <% for(var i in items){ %>
     <li> 
-      <%= item[i].title %>
+      <%= items[i].title %>
     </li>
   <% } %>
 </ul>
